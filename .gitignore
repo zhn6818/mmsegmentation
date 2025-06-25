@@ -120,3 +120,4 @@ mmseg/.mim
 *.pth
 CHASEDIR/
 CHASEDIR_test/
+seg_CHASEDIR/works/
