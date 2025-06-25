@@ -8,8 +8,31 @@ from mmengine.config import Config, DictAction
 from mmengine.logging import print_log
 from mmengine.runner import Runner
 
-from mmseg.registry import RUNNERS
+from mmseg.registry import RUNNERS, HOOKS
 
+# 导入devdeploy中的SaveFullModelHook
+import sys
+
+# 添加上级目录到Python路径，以便导入devdeploy包
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)  # tools的上级目录
+# parent_parent_dir = os.path.dirname(parent_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+# if parent_parent_dir not in sys.path:
+#     sys.path.insert(0, parent_parent_dir)
+try:
+    from devdeploy.hook.save_fullmodel_hook import SaveFullModelHook
+    print("Successfully imported SaveFullModelHook from devdeploy package")
+except ImportError as e:
+    print(f"Warning: Could not import SaveFullModelHook from devdeploy package: {e}")
+    # 如果导入失败，定义一个简单的占位符类
+    @HOOKS.register_module()
+    class SaveFullModelHook:
+        def __init__(self, **kwargs):
+            self.priority = 'NORMAL'
+        def after_train_epoch(self, runner):
+            pass
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a segmentor')

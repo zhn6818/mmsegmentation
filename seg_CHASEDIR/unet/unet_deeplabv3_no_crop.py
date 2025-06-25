@@ -68,6 +68,9 @@ model = dict(
     # 移除test_cfg中的crop_size和stride，使用完整图像推理
     test_cfg=dict(mode='whole'))
 
+# 任务类型配置
+task_type = 'segmentation'  # 可选值: 'classification', 'segmentation', 'detection' 等
+
 # 训练管道 - 确保图像严格resize到256×256
 train_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -161,7 +164,7 @@ resume = False
 tta_model = dict(type='SegTTAModel')
 
 # optimizer - 由于batch_size减小，可能需要调整学习率
-optimizer = dict(type='SGD', lr=0.005, momentum=0.9, weight_decay=0.0005)  # 减小学习率
+optimizer = dict(type='SGD', lr=0.05, momentum=0.9, weight_decay=0.0005)  # 减小学习率
 optim_wrapper = dict(type='OptimWrapper', optimizer=optimizer, clip_grad=None)
 
 # learning policy
@@ -176,7 +179,7 @@ param_scheduler = [
 ]
 
 # training schedule for 40k
-train_cfg = dict(type='IterBasedTrainLoop', max_iters=40000, val_interval=4000)
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=40000, val_interval=100)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -188,7 +191,16 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='SegVisualizationHook')) 
 
-# 主要修改内容
+# 注册自定义hook，保存完整模型结构和权重
+# 注意：这里使用的是devdeploy中的SaveFullModelHook，与mmpretrain独立
+custom_hooks = [
+    dict(
+        type='SaveFullModelHook',
+        # save_iter_best=True,  # 启用iter best保存，自动配置为iter-based训练
+    ),
+]
+
+# 主要修改内容mu
 # 1. 移除了所有裁剪相关的参数
 # 删除了 crop_size = (128, 128)
 # 删除了 stride = (85, 85)
